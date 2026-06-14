@@ -90,7 +90,7 @@ library package SYSMOD {
         }
         part functionalContext :> solutionContext [0..1] {
             doc
-            /* The Functional Context is optional and specializes the solution context and provides the context for a fcuntional architecture, for example, developed with the FAS method. */
+            /* The Functional Context is optional and specializes the solution context and provides the context for a functional architecture, for example, developed with the FAS method. */
             part functionalSystem {
                 doc
                 /* The Functional System is the root element of the functional architecture. It is part of the context in addition to the inherited solution system which may contain non-functional parts but is a reference for the functional architecture, such as owner of the functions. */
