@@ -264,6 +264,22 @@ library package SYSMOD {
             create_questions = (
                 "What is the name of the project?", "Where should I add the project definition?",
             );
+            validation_prompt =
+                "Validate the project definition against the SYSMOD Project concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. The project is defined as an occurrence definition annotated with the #project keyword or specializing Project.
+                2. A projectOwner part usage is present and subsets projectStakeholders.
+                3. A brownfieldContext part usage is present and typed by a SystemContext specialization.
+                4. A problemStatement concern usage is present.
+                5. A stakeholderNeeds concern usage is present and frames the problemStatement.
+                6. A systemIdeaContext part usage is present and specializes brownfieldContext.
+                7. A specificationContext part usage is present and specializes systemIdeaContext.
+                8. A systemRequirementSpecification requirement usage is present and frames stakeholderNeeds.
+                9. A solutionContext part usage is present and specializes specificationContext.
+                10. A productContext part usage is present and specializes solutionContext.
+                11. The cross-artifact traceability chain is intact: problemStatement <- stakeholderNeeds <- systemRequirementSpecification, and satisfy relationships exist at the system idea and solution levels.
+                12. If functionalContext or logicalContext are present, the corresponding functional2logical and logical2product allocations are defined.
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
 
         metadata projectOwnerAI : AI about projectOwner {
@@ -275,6 +291,17 @@ library package SYSMOD {
             create_questions = (
                 "Who is the project owner?", "Who is responsible for the project?",
             );
+            validation_prompt =
+                "Validate the projectOwner against the SYSMOD Project Owner concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. Exactly one projectOwner part usage is present in the project, redefining the inherited projectOwner.
+                2. The projectOwner subsets projectStakeholders and is typed by an ExtendedStakeholder specialization.
+                3. The risk attribute is set to LevelKind::critical (the project owner always has critical risk).
+                4. The effort attribute is set to LevelKind::low (the project owner is typically easy to reach).
+                5. The categories attribute includes StakeholderCategoryKind::requirementOwner.
+                6. The projectOwner is referenced as the stakeholder of the problemStatement.
+                7. A meaningful name or doc comment identifies who the project owner is in the context of this project.
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
 
         metadata brownfieldContextAI : AI about brownfieldContext {
@@ -291,6 +318,17 @@ library package SYSMOD {
                 "Which external actors (users, operators, external systems, environments) interact with the existing system?",
                 "Are there any known subcomponents or subsystems of the existing system that are relevant?",
             );
+            validation_prompt =
+                "Validate the brownfieldContext against the SYSMOD Brownfield Architecture concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. The brownfieldContext part usage is present in the project and typed by a SystemContext specialization.
+                2. At least one actor part usage subsetting actors is present, representing an external entity that interacts with the existing system.
+                3. The soi part is redefined with a named part definition representing the existing system of interest.
+                4. The soiImpl part is redefined and specializes soi, representing the white-box view of the existing system.
+                5. Actor-system interfaces (act2sys) connect actor ports to system ports.
+                6. The brownfield context contains only elements that exist before the project starts — no solution-specific parts, new system ideas, or future-state components.
+                7. Each actor has a meaningful name and, ideally, a doc comment describing its role.
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
 
         metadata problemStatementAI : AI about problemStatement {
@@ -309,6 +347,20 @@ library package SYSMOD {
                 "What is the core problem the system should solve?",
                 "What are the main deficiencies or pain points of the existing (brownfield) system?",
             );
+            validation_prompt =
+                "Validate the problemStatement against the SYSMOD Problem Statement concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. The problemStatement concern usage is present in the project, redefining the inherited problemStatement.
+                2. The subject references the brownfieldContext soiImpl (the existing system is the subject of the problem).
+                3. The projectOwner is set as the stakeholder of the problemStatement.
+                4. The priority attribute is set to LevelKind::critical.
+                5. A doc comment is present containing the problem statement text.
+                6. The problem statement text starts with 'How can we...' or an equivalent problem-framing phrase.
+                7. The problem statement text describes the problem, not a solution — check for premature solution language (e.g., 'we will build', 'the new system shall', named technologies or architectures).
+                8. The problem statement text references the brownfield system and its deficiencies.
+                9. The problem statement text is concise (typically 150-250 words).
+                10. If it is reverse engineering, a satisfy relationship exists between the existing system and the problemStatement.
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
 
         metadata projectStakeholdersAI : AI about projectStakeholders {
@@ -324,6 +376,19 @@ library package SYSMOD {
                 "Which organizations or roles own or define the requirements?",
                 "Are there regulatory bodies, standards authorities, or other external parties with an interest in the system?",
             );
+            validation_prompt =
+                "Validate the projectStakeholders against the SYSMOD Stakeholders concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. At least one stakeholder part usage (beyond the projectOwner) subsets projectStakeholders.
+                2. Each stakeholder part usage is typed by a part definition specializing ExtendedStakeholder.
+                3. Each stakeholder definition has the risk attribute set to a non-default LevelKind value (i.e., not LevelKind::none).
+                4. Each stakeholder definition has the effort attribute set to a non-default LevelKind value (i.e., not LevelKind::none).
+                5. Each stakeholder definition has at least one category assigned from StakeholderCategoryKind.
+                6. The set of stakeholders covers all actors present in the brownfieldContext — every actor should map to at least one stakeholder.
+                7. At least one stakeholder with category requirementOwner is present (beyond the projectOwner).
+                8. Each stakeholder has a doc comment or name that clearly identifies its role.
+                9. No two stakeholders have identical risk, effort, and category values without a distinguishing doc comment explaining the distinction.
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
 
         metadata stakeholderNeedsAI : AI about stakeholderNeeds {
@@ -338,6 +403,18 @@ library package SYSMOD {
                 "What does each stakeholder group need the system to do or be?",
                 "Are there any known constraints or non-functional needs (safety, cost, compliance) expressed by stakeholders?",
             );
+            validation_prompt =
+                "Validate the stakeholderNeeds against the SYSMOD Stakeholder Needs concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. The stakeholderNeeds concern usage is present in the project, redefining the inherited stakeholderNeeds.
+                2. The stakeholderNeeds frames the problemStatement.
+                3. The subject references the brownfieldContext soiImpl.
+                4. At least one stakeholder need is defined as a nested concern usage.
+                5. Each stakeholder need is traceable to at least one stakeholder from projectStakeholders (via stakeholder reference or doc comment attribution).
+                6. Each need is expressed at the stakeholder intent level — check for premature solution or design language (e.g., specific technologies, implementation details, design choices).
+                7. The set of stakeholder needs covers all projectStakeholders — no stakeholder group should be left without at least one associated need.
+                8. Each need has a doc comment or name that is understandable without reading the full model.
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
 
         metadata systemIdeaContextAI : AI about systemIdeaContext {
@@ -352,6 +429,18 @@ library package SYSMOD {
                 "What is the high-level concept or approach for the new or changed system?",
                 "Are there any new actors introduced by the system idea that do not exist in the brownfield?",
             );
+            validation_prompt =
+                "Validate the systemIdeaContext against the SYSMOD System Idea concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. The systemIdeaContext part usage is present in the project and specializes brownfieldContext.
+                2. The soi part is redefined with a named system idea definition that specializes the brownfield soi.
+                3. The soiImpl part is redefined and specializes the system idea soi.
+                4. The soiImpl contains a satisfy relationship to the problemStatement.
+                5. All actors from the brownfieldContext are inherited or explicitly redefined — no brownfield actor should silently disappear.
+                6. Any new actors introduced by the system idea are added as additional actor part usages.
+                7. The system idea stays at a conceptual level — check for premature architecture or design detail (e.g., specific components, protocols, or technologies named in the soiImpl structure).
+                8. A doc comment on the soiImpl describes the system idea in elevator-pitch style.
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
 
         metadata specificationContextAI : AI about specificationContext {
@@ -366,6 +455,18 @@ library package SYSMOD {
                 "Which use cases describe how actors interact with the system?",
                 "Are there additional actors or subcomponents that become visible at the specification level?",
             );
+            validation_prompt =
+                "Validate the specificationContext against the SYSMOD Specification Context concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. The specificationContext part usage is present in the project and specializes systemIdeaContext.
+                2. The soi part is redefined with a named specification system definition that specializes the system idea soi.
+                3. The soiImpl part is redefined and specializes the specification soi.
+                4. At least one use case usage is present in the specificationContext, referencing the specificationSystem as its subject.
+                5. Each use case has at least one actor involved (include or extend relationships, or actor references in the use case subject/stakeholder).
+                6. Each use case has a meaningful name and doc comment describing the interaction goal.
+                7. All actors from the systemIdeaContext are inherited or redefined — no actor should silently disappear.
+                8. The specificationContext does not contain solution architecture elements — it should remain a black-box view of the system.
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
 
         metadata systemRequirementSpecificationAI : AI about systemRequirementSpecification {
@@ -381,6 +482,20 @@ library package SYSMOD {
                 "Are there non-functional requirements (performance, safety, reliability, compliance)?",
                 "Which requirements are mandatory and which are optional?",
             );
+            validation_prompt =
+                "Validate the systemRequirementSpecification against the SYSMOD System Requirements concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. The systemRequirementSpecification requirement usage is present in the project, framing the stakeholderNeeds.
+                2. The subject references the specificationContext soi (the specification system is the subject of the requirements).
+                3. At least one system requirement is defined as a nested requirement usage or definition.
+                4. Each requirement specializes ExtendedRequirement and has the obligation attribute set (not ObligationKind::none).
+                5. Each requirement has the stability attribute set (not StabilityKind::none).
+                6. Each requirement has a non-empty motivation attribute explaining why the requirement exists.
+                7. Each requirement is traceable to at least one stakeholder need (via frame or derive relationships, or doc comment reference).
+                8. Each requirement text is verifiable — check for vague qualifiers without measurable criteria (e.g., 'fast', 'easy', 'reliable' without a threshold).
+                9. Each requirement is solution-neutral — check for implementation-specific language (named technologies, specific designs) that constrain the solution unnecessarily.
+                10. The set of requirements covers all defined use cases — every use case should be reflected in at least one functional requirement.
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
 
         metadata solutionContextAI : AI about solutionContext {
@@ -394,6 +509,16 @@ library package SYSMOD {
                 "What is the name of the solution system?",
                 "Are there any top-level solution elements already known at this stage?",
             );
+            validation_prompt =
+                "Validate the solutionContext against the SYSMOD Solution Context concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. The solutionContext part usage is present in the project and specializes specificationContext.
+                2. The soi part is redefined with a named solution system definition that specializes the specification soi.
+                3. The soiImpl part is redefined and specializes the solution soi.
+                4. The soiImpl contains a satisfy relationship to the systemRequirementSpecification.
+                5. The solutionContext does not duplicate architecture details that belong in functionalContext, logicalContext, or productContext.
+                6. All actors from the specificationContext are inherited or redefined — no actor should silently disappear.
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
 
         metadata functionalContextAI : AI about functionalContext {
@@ -409,6 +534,17 @@ library package SYSMOD {
                 "What are the top-level functions the system must perform?",
                 "Should the functional architecture follow the FAS method or another approach?",
             );
+            validation_prompt =
+                "Validate the functionalContext against the SYSMOD Functional Architecture concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. If present, the functionalContext part usage specializes solutionContext and has multiplicity [0..1].
+                2. A functionalSystem part is present as the root of the functional decomposition, separate from the inherited solution system.
+                3. At least one top-level function is defined as an action usage or part usage within the functionalSystem.
+                4. Each top-level function is traceable to at least one system requirement (via satisfy, refine, or doc comment reference).
+                5. Functions are technology-independent — check for implementation-specific naming or structure that belongs in the logical or product architecture.
+                6. If a logicalContext is present in the project, a functional2logical allocation is defined connecting the functionalContext to the logicalContext.
+                7. The functionalSystem does not duplicate parts from the inherited solution system — it represents the functional view only.
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
 
         metadata logicalContextAI : AI about logicalContext {
@@ -424,6 +560,17 @@ library package SYSMOD {
                 "What are the key logical components or subsystems?",
                 "Are there technology-independent partitioning principles to apply (e.g., separation of concerns, layers)?",
             );
+            validation_prompt =
+                "Validate the logicalContext against the SYSMOD Logical Architecture concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. If present, the logicalContext part usage specializes solutionContext and has multiplicity [0..1].
+                2. At least one logical component is defined as a part usage within the logical system.
+                3. Logical components are technology-independent — check for product-specific naming, vendor names, physical form factors, or deployment-specific details that belong in the productContext.
+                4. Each logical component is traceable to at least one function from the functionalContext (if present) via allocation or doc comment.
+                5. If a functionalContext is present in the project, a functional2logical allocation is defined connecting functionalContext to logicalContext.
+                6. If a productContext is present in the project, a logical2product allocation is defined connecting logicalContext to productContext.
+                7. Logical component interfaces are defined where components interact, using port and interface definitions.
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
 
         metadata productContextAI : AI about productContext {
@@ -439,6 +586,17 @@ library package SYSMOD {
                 "Are there hardware/software splits or deployment boundaries to model?",
                 "Which product components are derived from the logical architecture?",
             );
+            validation_prompt =
+                "Validate the productContext against the SYSMOD Product Architecture concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. The productContext part usage is present in the project and specializes solutionContext.
+                2. At least one product component is defined as a part usage within the product system.
+                3. Product components represent concrete, physical or deployable building blocks — check that logical or functional abstractions have been resolved to specific technologies, hardware types, or software components.
+                4. Each product component is traceable to at least one logical component from the logicalContext (if present) via the logical2product allocation or doc comment.
+                5. If a logicalContext is present in the project, a logical2product allocation is defined connecting logicalContext to productContext.
+                6. Interfaces between product components are defined where components interact physically or through APIs.
+                7. All system requirements are satisfied — verify that a satisfy relationship chain exists from the product architecture back to the systemRequirementSpecification (directly or via solutionContext).
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
 
         metadata subProjectsAI : AI about subProjects {
@@ -454,6 +612,16 @@ library package SYSMOD {
                 "What are the names and scopes of the sub-projects?",
                 "Do the sub-projects share stakeholders or requirements with the parent project?",
             );
+            validation_prompt =
+                "Validate the subProjects against the SYSMOD sub-project decomposition concept and report findings grouped as errors, warnings, and suggestions.
+                Check:
+                1. Each sub-project occurrence usage subsets the inherited subProjects and is typed by an occurrence definition specializing Project or AIProject.
+                2. Each sub-project has at least a projectOwner and a brownfieldContext defined.
+                3. Each sub-project has a problemStatement that is consistent with and narrower in scope than the parent project's problemStatement.
+                4. Shared stakeholders between parent and sub-projects are referenced by subsetting the parent project's stakeholder part usages rather than duplicated as independent definitions.
+                5. There are no overlapping scopes between sibling sub-projects — each sub-project addresses a distinct part of the parent problem.
+                6. Each sub-project has a meaningful name and doc comment describing its scope and relationship to the parent project.
+                Report each finding with the element name, the violated SYSMOD rule, and a concrete suggestion for correction.";
         }
     }
 
