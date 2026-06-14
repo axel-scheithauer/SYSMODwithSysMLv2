@@ -50,8 +50,6 @@ examples/
   DeliveryDrone-Model.sysml   # Example model
   DeliveryDrone-StakeholderPriorityMap.svg
 SYSMOD Quick Sheets/          # Visual reference cards (SVG)
-models/
-  Cameo-SYSMOD.mdszip         # Reference model for Cameo Systems Modeler
 ```
 
 ## Contributing
