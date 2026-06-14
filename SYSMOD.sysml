@@ -258,7 +258,7 @@ library package SYSMOD {
     occurrence def AIProject :> Project {
         @AI {
             create_prompt =
-                "1. Create the SySML v2 textual notation for the project definition using the SYSMOD-defined keyword: '#project occurrence def PROJECTNAME {}'  
+                "1. Create the SysML v2 textual notation for the project definition using the SYSMOD-defined keyword: '#project occurrence def PROJECTNAME {}'
                 2. Use the create_prompt of the AI metadata of the projectOwner to create the project owner of the project.
                 3. If not given by the user, use the questions to get the name of the project and the location where the project should be added.";
             create_questions = (
@@ -273,34 +273,187 @@ library package SYSMOD {
                 3. Create the SysML v2 textual notation for the projectOwner.
                 4. If the user asks to insert the projectOwner into the SysML model, find the project and the projectOwner within the project. If no project exists, create one and insert the projectOwner into the project redefining the inherited projectOwner part usage. If the projectOwner already exists, update it.";
             create_questions = (
-                "Who is the project owner?", "Who is the repsonsible for the project?",
+                "Who is the project owner?", "Who is responsible for the project?",
             );
         }
 
         metadata brownfieldContextAI : AI about brownfieldContext {
-            create_prompt = "";
-            create_questions = "";
+            create_prompt =
+                "1. Analyze the provided scenario and identify the brownfield system: the existing system, its relevant subcomponents, and all external actors (humans, external systems, environmental effects) that already interact with it before the project starts.
+                2. Create a part definition for the brownfield system of interest specializing SystemContext.
+                3. For each identified actor, add a part usage subsetting the inherited actors part.
+                4. For the system of interest, redefine the inherited soi and soiImpl parts with appropriately named and typed part definitions.
+                5. Ensure the brownfield context reflects constraints and givens only — it must not include solution elements.
+                6. Create the SysML v2 textual notation for the brownfieldContext.
+                7. If the user asks to insert the brownfieldContext into the SysML model, find the project and redefine the inherited brownfieldContext part usage. If the project does not exist, create one first.";
+            create_questions = (
+                "What is the name of the existing system (system of interest)?",
+                "Which external actors (users, operators, external systems, environments) interact with the existing system?",
+                "Are there any known subcomponents or subsystems of the existing system that are relevant?",
+            );
         }
 
         metadata problemStatementAI : AI about problemStatement {
             create_prompt =
                 "1. Follow the structure between engineering artifacts given by the SYSMOD library.
-                 2. Analyze the provided scenario. If it is forward engineering, identify the problem statement from the given scenario. If it is reverse engineering, identify the problem statement by identifying the problem that is solved by the given system.
-                 3. Create a concise elevator-pitch style problem statement text (typically 150-250 words)
-                 4. Follow this format: 'How can we...'
-                 5. Ensure the problem statement text is based on the brownfieldSystemContext. If the brownfieldSystemContext is not available, create one that is implied by the problem statement text using the AI metadata about the brownfieldSystemContext.
-                 6. Ensure that the problem statement does not jump to the solution and describe it in advance.
-                 7. Ensure that the stakeholder projectOwner is set by subsetting the corresponding part usage in the project, if given. If it is not available, use the create_prompt of the AI metadata about the projectOwner to create one.
-                 8. If it is reverse engineering, create a satisfy relationship between the given system and the problem statement.
-                 9. Create the SysML v2 textual notation for the problemStatement.
-                 10. If the user asks to insert the problemStatement into the SysML model, find the project and the problemStatement within the project. If no project exists, create one and insert the problemStatement into the project redefining the inherited problemStatement concern usage. If the problemStatement already exists, update it.";
+                2. Analyze the provided scenario. If it is forward engineering, identify the problem statement from the given scenario. If it is reverse engineering, identify the problem statement by identifying the problem that is solved by the given system.
+                3. Create a concise elevator-pitch style problem statement text (typically 150-250 words).
+                4. Follow this format: 'How can we...'
+                5. Ensure the problem statement text is based on the brownfieldContext. If the brownfieldContext is not available, create one that is implied by the problem statement text using the AI metadata about the brownfieldContext.
+                6. Ensure that the problem statement does not jump to the solution and describe it in advance.
+                7. Ensure that the stakeholder projectOwner is set by subsetting the corresponding part usage in the project, if given. If it is not available, use the create_prompt of the AI metadata about the projectOwner to create one.
+                8. If it is reverse engineering, create a satisfy relationship between the given system and the problem statement.
+                9. Create the SysML v2 textual notation for the problemStatement.
+                10. If the user asks to insert the problemStatement into the SysML model, find the project and the problemStatement within the project. If no project exists, create one and insert the problemStatement into the project redefining the inherited problemStatement concern usage. If the problemStatement already exists, update it.";
+            create_questions = (
+                "What is the core problem the system should solve?",
+                "What are the main deficiencies or pain points of the existing (brownfield) system?",
+            );
         }
 
         metadata projectStakeholdersAI : AI about projectStakeholders {
             create_prompt =
-                "1. Analyze the brownfieldContext and the problemStatement and identify the stakeholders. 
-                2. Create the SysML v2 textual notation for the stakeholder definitions specializing ExtendedStakeholder.
-                3. Identify the risk, effort, and stakeholder categories of each stakeholder.";
+                "1. Analyze the brownfieldContext and the problemStatement and identify all relevant stakeholders (individuals or organizations with an interest in the system).
+                2. For each stakeholder, create a part definition specializing ExtendedStakeholder.
+                3. Assess and set the risk (what is the risk of failure if this stakeholder is ignored?), effort (how much effort is needed to identify their concerns?), and one or more stakeholder categories (user, requirementOwner, expert, other) for each stakeholder.
+                4. Add each stakeholder as a named part usage subsetting projectStakeholders inside the project, typed by the corresponding stakeholder definition.
+                5. Create the SysML v2 textual notation for all stakeholder definitions and their usages within the project.
+                6. If the user asks to insert the stakeholders into the SysML model, find the project and add or update the stakeholder part usages.";
+            create_questions = (
+                "Who are the primary users of the system?",
+                "Which organizations or roles own or define the requirements?",
+                "Are there regulatory bodies, standards authorities, or other external parties with an interest in the system?",
+            );
+        }
+
+        metadata stakeholderNeedsAI : AI about stakeholderNeeds {
+            create_prompt =
+                "1. Analyze the projectStakeholders and the problemStatement and derive the high-level needs of each stakeholder.
+                2. For each stakeholder need, create a concern usage subsetting stakeholderNeeds, framed by the problemStatement and referencing the brownfieldContext as its subject.
+                3. Ensure each need is expressed from the stakeholder's perspective and describes what they need the system to do or be, not how.
+                4. Do not express needs as solution-specific requirements; keep them at the stakeholder intent level.
+                5. Create the SysML v2 textual notation for the stakeholderNeeds.
+                6. If the user asks to insert the stakeholderNeeds into the SysML model, find the project and redefine the inherited stakeholderNeeds concern usage. If the project does not exist, create one first.";
+            create_questions = (
+                "What does each stakeholder group need the system to do or be?",
+                "Are there any known constraints or non-functional needs (safety, cost, compliance) expressed by stakeholders?",
+            );
+        }
+
+        metadata systemIdeaContextAI : AI about systemIdeaContext {
+            create_prompt =
+                "1. Based on the problemStatement, develop a high-level system idea: an elevator-pitch-style outline of the new or changed system that solves the stated problem.
+                2. Specialize the brownfieldContext by redefining the soi and soiImpl parts with a named system idea definition. The systemIdeaSystemImpl must include a satisfy relationship to the problemStatement.
+                3. Add any additional actors that are introduced by the system idea and are not already present in the brownfieldContext.
+                4. Keep the system idea at a conceptual level — no detailed architecture or design decisions.
+                5. Create the SysML v2 textual notation for the systemIdeaContext.
+                6. If the user asks to insert the systemIdeaContext into the SysML model, find the project and redefine the inherited systemIdeaContext part usage. If the project does not exist, create one first.";
+            create_questions = (
+                "What is the high-level concept or approach for the new or changed system?",
+                "Are there any new actors introduced by the system idea that do not exist in the brownfield?",
+            );
+        }
+
+        metadata specificationContextAI : AI about specificationContext {
+            create_prompt =
+                "1. Specialize the systemIdeaContext for requirements analysis by redefining the soi and soiImpl parts with specification-level system definitions.
+                2. Identify and add any actors or subcomponents that become visible during requirements analysis (e.g., specific interfaces, subsystems defined at the black-box level).
+                3. Add system use cases to the specificationContext that describe how actors interact with the system of interest at the specification level.
+                4. Ensure the specificationContext owns the use cases and that each use case references the specificationSystem as its subject.
+                5. Create the SysML v2 textual notation for the specificationContext including actor parts and use case usages.
+                6. If the user asks to insert the specificationContext into the SysML model, find the project and redefine the inherited specificationContext part usage.";
+            create_questions = (
+                "Which use cases describe how actors interact with the system?",
+                "Are there additional actors or subcomponents that become visible at the specification level?",
+            );
+        }
+
+        metadata systemRequirementSpecificationAI : AI about systemRequirementSpecification {
+            create_prompt =
+                "1. Derive system requirements from the stakeholderNeeds, framed by the stakeholderNeeds and referencing the specificationSystem as subject.
+                2. For each requirement, create a requirement usage or definition specializing ExtendedRequirement. Set obligation (mandatory/optional), stability (stable/unstable), and a brief motivation.
+                3. Ensure each requirement is verifiable, unambiguous, and solution-neutral where possible.
+                4. Group requirements logically (e.g., functional, performance, safety, interface) using nested requirement usages if appropriate.
+                5. Create the SysML v2 textual notation for the systemRequirementSpecification.
+                6. If the user asks to insert the systemRequirementSpecification into the SysML model, find the project and redefine the inherited systemRequirementSpecification requirement usage.";
+            create_questions = (
+                "What are the key functional requirements of the system?",
+                "Are there non-functional requirements (performance, safety, reliability, compliance)?",
+                "Which requirements are mandatory and which are optional?",
+            );
+        }
+
+        metadata solutionContextAI : AI about solutionContext {
+            create_prompt =
+                "1. Specialize the specificationContext for the solution by redefining the soi and soiImpl parts with solution-level system definitions.
+                2. The solutionSystemImpl must include a satisfy relationship to the systemRequirementSpecification.
+                3. The solutionContext is the base for functional, logical, and product architectures — keep it at the integration level and avoid duplicating architecture details that belong in those sub-contexts.
+                4. Create the SysML v2 textual notation for the solutionContext.
+                5. If the user asks to insert the solutionContext into the SysML model, find the project and redefine the inherited solutionContext part usage.";
+            create_questions = (
+                "What is the name of the solution system?",
+                "Are there any top-level solution elements already known at this stage?",
+            );
+        }
+
+        metadata functionalContextAI : AI about functionalContext {
+            create_prompt =
+                "1. If a functional architecture is required, specialize the solutionContext by redefining the soi and soiImpl parts for the functional level.
+                2. Add a functionalSystem part as the root of the functional architecture (e.g., developed with the FAS method). This is separate from the inherited solution system and represents the functional decomposition.
+                3. Define the top-level functions as action usages or part usages within the functionalSystem.
+                4. If allocations to the logical architecture are known, note them; formal allocations are expressed via the functional2logical allocation in the project.
+                5. Create the SysML v2 textual notation for the functionalContext.
+                6. If the user asks to insert the functionalContext into the SysML model, find the project and redefine the inherited functionalContext part usage (note: multiplicity is [0..1]).";
+            create_questions = (
+                "Is a functional architecture required for this project?",
+                "What are the top-level functions the system must perform?",
+                "Should the functional architecture follow the FAS method or another approach?",
+            );
+        }
+
+        metadata logicalContextAI : AI about logicalContext {
+            create_prompt =
+                "1. If a logical architecture is required, specialize the solutionContext by redefining the soi and soiImpl parts for the logical level.
+                2. Define logical components as part usages within the logical system, representing technology-independent building blocks that realize the functional architecture.
+                3. If allocations from the functional architecture are known, note them; formal allocations are expressed via the functional2logical allocation in the project.
+                4. If allocations to the product architecture are known, note them; formal allocations are expressed via the logical2product allocation in the project.
+                5. Create the SysML v2 textual notation for the logicalContext.
+                6. If the user asks to insert the logicalContext into the SysML model, find the project and redefine the inherited logicalContext part usage (note: multiplicity is [0..1]).";
+            create_questions = (
+                "Is a logical architecture required for this project?",
+                "What are the key logical components or subsystems?",
+                "Are there technology-independent partitioning principles to apply (e.g., separation of concerns, layers)?",
+            );
+        }
+
+        metadata productContextAI : AI about productContext {
+            create_prompt =
+                "1. Specialize the solutionContext for the product architecture by redefining the soi and soiImpl parts with concrete product-level definitions.
+                2. Define product components as part usages within the product system, representing physical or deployable building blocks (hardware, software components, assemblies).
+                3. If allocations from the logical architecture are known, note them; formal allocations are expressed via the logical2product allocation in the project.
+                4. Include interfaces between product components where relevant.
+                5. Create the SysML v2 textual notation for the productContext.
+                6. If the user asks to insert the productContext into the SysML model, find the project and redefine the inherited productContext part usage.";
+            create_questions = (
+                "What are the main physical or deployable components of the system?",
+                "Are there hardware/software splits or deployment boundaries to model?",
+                "Which product components are derived from the logical architecture?",
+            );
+        }
+
+        metadata subProjectsAI : AI about subProjects {
+            create_prompt =
+                "1. If the project is decomposed into sub-projects, create occurrence definitions specializing Project (or AIProject) for each sub-project.
+                2. Add each sub-project as an occurrence usage subsetting subProjects within the parent project.
+                3. Ensure each sub-project has its own projectOwner, brownfieldContext, and problemStatement as appropriate.
+                4. Cross-reference shared artifacts (e.g., shared stakeholders or requirements) by subsetting or referencing the parent project's elements.
+                5. Create the SysML v2 textual notation for all sub-project definitions and their usages.
+                6. If the user asks to insert sub-projects into the SysML model, find the parent project and add the sub-project occurrence usages.";
+            create_questions = (
+                "Should the project be decomposed into sub-projects?",
+                "What are the names and scopes of the sub-projects?",
+                "Do the sub-projects share stakeholders or requirements with the parent project?",
+            );
         }
     }
 
